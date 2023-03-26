@@ -4,7 +4,6 @@ url:https://github.com/vlOd2/MinecraftMods/raw/main/Mods/Alpassic/v0.0.3.jar
 launch-method:indev
 launch-method-link:
 proxy-args:-Dhttp.proxyHost=betacraft.uk -Dhttp.proxyPort=11705
-other-name:Alpassic v0.0.3
 protocolVersion:classic_7
 base-version:a1.0.6_03
 file-ver:1
