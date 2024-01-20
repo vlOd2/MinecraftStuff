@@ -1,0 +1,39 @@
+--- a/net/minecraft/src/EntityPlayer.java
++++ b/net/minecraft/src/EntityPlayer.java
+@@ -12,6 +12,7 @@
+ 	public int swingProgressInt = 0;
+ 	public String username;
+ 	private int damageRemainder = 0;
++	public String deathScreen = "unknown";
+ 
+ 	public EntityPlayer(World world1) {
+ 		super(world1);
+@@ -192,7 +193,7 @@
+ 	protected float getEyeHeight() {
+ 		return 0.12F;
+ 	}
+-
++	
+ 	public boolean attackEntityFrom(Entity entity, int damage) {
+ 		this.entityAge = 0;
+ 		if(this.health <= 0) {
+@@ -200,7 +201,9 @@
+ 		} else if((float)this.heartsLife > (float)this.heartsHalvesLife / 2.0F) {
+ 			return false;
+ 		} else {
+-			if(entity instanceof EntityMob || entity instanceof EntityArrow) {
++			this.deathScreen = "unknown";
++
++			if (entity instanceof EntityMob || entity instanceof EntityArrow) {
+ 				if(this.worldObj.difficultySetting == 0) {
+ 					damage = 0;
+ 				}
+@@ -212,6 +215,8 @@
+ 				if(this.worldObj.difficultySetting == 3) {
+ 					damage = damage * 3 / 2;
+ 				}
++				
++				this.deathScreen = "mob";
+ 			}
+ 
+ 			int i3 = 25 - this.inventory.getTotalArmorValue();

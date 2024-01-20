@@ -1,0 +1,59 @@
+--- a/net/minecraft/src/SoundManager.java
++++ b/net/minecraft/src/SoundManager.java
+@@ -82,6 +82,44 @@
+ 		this.soundPoolMusic.addSound(name, file);
+ 	}
+ 
++	private void setMusicTimer() {
++		this.ticksBeforeMusic = this.rand.nextInt(24000) + 24000;
++	}
++	
++	public void stopMusic() {
++		this.setMusicTimer();
++		this.sndSystem.stop("BgMusic");
++	}
++	
++	public boolean isMusicRegistered(String music) {
++		return this.soundPoolMusic.getRandomSoundFromSoundPool(music) != null;
++	}
++	
++	public void playMusic(String music, float volume, float pitch) {
++		if (!this.loaded || !this.options.a) {
++			return;
++		}
++		
++		SoundPoolEntry soundPoolEntry = this.soundPoolMusic.getRandomSoundFromSoundPool(music);
++		this.sndSystem.stop("BgMusic");
++		this.sndSystem.stop("streaming");
++		this.setMusicTimer();
++		
++		if (soundPoolEntry == null) {
++			return;
++		}
++
++		if (volume > 1.0F) {
++			volume = 1.0F;
++		}
++		volume *= 0.25F;
++		
++		this.sndSystem.backgroundMusic("BgMusic", soundPoolEntry.soundUrl, soundPoolEntry.soundName, false);
++		this.sndSystem.setPitch("BgMusic", pitch);
++		this.sndSystem.setVolume("BgMusic", volume);
++		this.sndSystem.play("BgMusic");
++	}
++	
+ 	public void playRandomMusicIfReady() {
+ 		if(this.loaded && this.options.a) {
+ 			if(!this.sndSystem.playing("BgMusic") && !this.sndSystem.playing("streaming")) {
+@@ -92,8 +130,10 @@
+ 
+ 				SoundPoolEntry soundPoolEntry1 = this.soundPoolMusic.getRandomSound();
+ 				if(soundPoolEntry1 != null) {
+-					this.ticksBeforeMusic = this.rand.nextInt(24000) + 24000;
++					this.setMusicTimer();
+ 					this.sndSystem.backgroundMusic("BgMusic", soundPoolEntry1.soundUrl, soundPoolEntry1.soundName, false);
++					this.sndSystem.setPitch("BgMusic", 1.0F);
++					this.sndSystem.setVolume("BgMusic", 1.0F);
+ 					this.sndSystem.play("BgMusic");
+ 				}
+ 			}

@@ -1,0 +1,27 @@
+--- a/net/minecraft/src/EntityLiving.java
++++ b/net/minecraft/src/EntityLiving.java
+@@ -97,6 +97,10 @@
+ 
+ 		if(this.isEntityAlive() && this.isEntityInsideOpaqueBlock()) {
+ 			this.attackEntityFrom((Entity)null, 1);
++			
++			if (this instanceof EntityPlayer) {
++				((EntityPlayer)this).deathScreen = "suffocate";
++			}
+ 		}
+ 
+ 		int i8;
+@@ -375,7 +379,12 @@
+ 	protected void fall(float f1) {
+ 		int i2 = (int)Math.ceil((double)(f1 - 3.0F));
+ 		if(i2 > 0) {
+-			this.attackEntityFrom((Entity)null, i2);
++			this.attackEntityFrom(null, i2);
++			
++			if (this instanceof EntityPlayer) {
++				((EntityPlayer)this).deathScreen = "fall";
++			}
++			
+ 			int i3 = this.worldObj.getBlockId(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posY - (double)0.2F - (double)this.yOffset), MathHelper.floor_double(this.posZ));
+ 			if(i3 > 0) {
+ 				StepSound stepSound4 = Block.blocksList[i3].stepSound;

@@ -1,0 +1,11 @@
+--- a/net/minecraft/src/RenderEngine.java
++++ b/net/minecraft/src/RenderEngine.java
+@@ -20,7 +20,7 @@
+ 	private HashMap textureMap = new HashMap();
+ 	private HashMap textureContentsMap = new HashMap();
+ 	private IntBuffer singleIntBuffer = GLAllocation.createDirectIntBuffer(1);
+-	private ByteBuffer imageData = GLAllocation.createDirectByteBuffer(1048576);
++	private ByteBuffer imageData = GLAllocation.createDirectByteBuffer(5242880);
+ 	private List textureList = new ArrayList();
+ 	private Map urlToImageDataMap = new HashMap();
+ 	private GameSettings options;

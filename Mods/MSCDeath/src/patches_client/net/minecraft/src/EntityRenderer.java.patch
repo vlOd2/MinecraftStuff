@@ -1,0 +1,128 @@
+--- a/net/minecraft/src/EntityRenderer.java
++++ b/net/minecraft/src/EntityRenderer.java
+@@ -1,11 +1,13 @@
+ package net.minecraft.src;
+ 
++import java.nio.ByteBuffer;
+ import java.nio.FloatBuffer;
+ import java.util.List;
+ import java.util.Random;
+ 
+ import net.minecraft.client.Minecraft;
+ 
++import org.lwjgl.BufferUtils;
+ import org.lwjgl.input.Mouse;
+ import org.lwjgl.opengl.Display;
+ import org.lwjgl.opengl.GL11;
+@@ -28,6 +30,8 @@
+ 	float fogColorBlue;
+ 	private float prevFogColor;
+ 	private float fogColor;
++	private boolean takingDeathScreenshot;
++	private boolean takingAltDeathScreenshot;
+ 
+ 	public EntityRenderer(Minecraft minecraft) {
+ 		this.mc = minecraft;
+@@ -114,6 +118,10 @@
+ 	}
+ 
+ 	private void hurtCameraEffect(float renderPartialTick) {
++		if (this.takingDeathScreenshot) {
++			return;
++		}
++		
+ 		EntityPlayerSP entityPlayerSP2 = this.mc.thePlayer;
+ 		float f3 = (float)entityPlayerSP2.hurtTime - renderPartialTick;
+ 		float f4;
+@@ -151,7 +159,8 @@
+ 		double d3 = entityPlayerSP2.prevPosX + (entityPlayerSP2.posX - entityPlayerSP2.prevPosX) * (double)renderPartialTick;
+ 		double d5 = entityPlayerSP2.prevPosY + (entityPlayerSP2.posY - entityPlayerSP2.prevPosY) * (double)renderPartialTick;
+ 		double d7 = entityPlayerSP2.prevPosZ + (entityPlayerSP2.posZ - entityPlayerSP2.prevPosZ) * (double)renderPartialTick;
+-		if(this.mc.options.thirdPersonView) {
++		
++		if(this.mc.options.thirdPersonView && !this.takingDeathScreenshot) {
+ 			double d9 = 4.0D;
+ 			float f10000 = entityPlayerSP2.prevRenderYawOffset + (entityPlayerSP2.renderYawOffset - entityPlayerSP2.prevRenderYawOffset) * renderPartialTick;
+ 			float f12 = entityPlayerSP2.rotationYaw - 10.0F;
+@@ -185,8 +194,15 @@
+ 			GL11.glTranslatef(0.0F, 0.0F, -0.1F);
+ 		}
+ 
+-		GL11.glRotatef(entityPlayerSP2.prevRotationPitch + (entityPlayerSP2.rotationPitch - entityPlayerSP2.prevRotationPitch) * renderPartialTick, 1.0F, 0.0F, 0.0F);
+-		GL11.glRotatef(entityPlayerSP2.prevRotationYaw + (entityPlayerSP2.rotationYaw - entityPlayerSP2.prevRotationYaw) * renderPartialTick + 180.0F, 0.0F, 1.0F, 0.0F);
++		if (!this.takingAltDeathScreenshot) {			
++			GL11.glRotatef(entityPlayerSP2.prevRotationPitch + (entityPlayerSP2.rotationPitch - entityPlayerSP2.prevRotationPitch) * renderPartialTick, 1.0F, 0.0F, 0.0F);
++		}
++		GL11.glRotatef(entityPlayerSP2.prevRotationYaw + (entityPlayerSP2.rotationYaw - entityPlayerSP2.prevRotationYaw) * renderPartialTick + 180.0F, 0.0F, 1.0F, 0.0F);	
++	
++		if (this.takingAltDeathScreenshot) {
++			GL11.glTranslatef(-2.5F, 0.0F, 1.0F);
++			GL11.glRotatef(65.0F, 0.0F, 1.0F, 0.0F);
++		}
+ 	}
+ 
+ 	private void setupCameraTransform(float renderPartialTick, int i2) {
+@@ -214,6 +230,10 @@
+ 	}
+ 
+ 	private void renderHand(float renderPartialTick, int i2) {
++		if (this.takingDeathScreenshot) {
++			return;
++		}
++		
+ 		GL11.glLoadIdentity();
+ 		if(this.mc.options.anaglyph) {
+ 			GL11.glTranslatef((float)(i2 * 2 - 1) * 0.1F, 0.0F, 0.0F);
+@@ -241,6 +261,41 @@
+ 
+ 	}
+ 
++	public ByteBuffer takeDeathScreenshot() {
++		this.takingDeathScreenshot = true;
++		this.takingAltDeathScreenshot = false;
++		this.updateCameraAndRender(0.0F);
++		this.takingDeathScreenshot = false;
++		
++		ByteBuffer buffer = BufferUtils.createByteBuffer(
++				this.mc.displayWidth * this.mc.displayHeight * 3);
++		GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 1);
++		GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
++		GL11.glReadPixels(0, 0, this.mc.displayWidth, this.mc.displayHeight, 
++				GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, buffer);
++		buffer.clear();
++		
++		return buffer;
++	}
++	
++	public ByteBuffer takeAltDeathScreenshot() {
++		this.takingDeathScreenshot = true;
++		this.takingAltDeathScreenshot = true;
++		this.updateCameraAndRender(0.0F);
++		this.takingAltDeathScreenshot = false;
++		this.takingDeathScreenshot = false;
++		
++		ByteBuffer buffer = BufferUtils.createByteBuffer(
++				this.mc.displayWidth * this.mc.displayHeight * 3);
++		GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 1);
++		GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
++		GL11.glReadPixels(0, 0, this.mc.displayWidth, this.mc.displayHeight, 
++				GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, buffer);
++		buffer.clear();
++		
++		return buffer;
++	}
++
+ 	public void updateCameraAndRender(float renderPartialTick) {
+ 		if(!Display.isActive()) {
+ 			if(System.currentTimeMillis() - this.prevFrameTime > 500L) {
+@@ -271,7 +326,9 @@
+ 			int i6 = i8 - Mouse.getY() * i8 / this.mc.displayHeight - 1;
+ 			if(this.mc.theWorld != null) {
+ 				this.renderWorld(renderPartialTick);
+-				this.mc.ingameGUI.renderGameOverlay(renderPartialTick, this.mc.currentScreen != null, i5, i6);
++				if (!this.takingDeathScreenshot) {
++					this.mc.ingameGUI.renderGameOverlay(renderPartialTick, this.mc.currentScreen != null, i5, i6);
++				}					
+ 			} else {
+ 				GL11.glViewport(0, 0, this.mc.displayWidth, this.mc.displayHeight);
+ 				GL11.glClearColor(0.0F, 0.0F, 0.0F, 0.0F);
